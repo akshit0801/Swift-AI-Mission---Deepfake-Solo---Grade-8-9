@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mission: The Eagle Eye</title>
+<style>
+  :root{
+    --bg-deep:#1e242a;
+    --bg-mid:#262e35;
+    --panel:#313a42;
+    --line:#4a5560;
+    --teal:#5b9a9b;
+    --teal-dim:#3f6d6e;
+    --amber:#cf9a52;
+    --brick:#a6503a;
+    --text-main:#eae4d3;
+    --text-dim:#9aa7ad;
+  }
+
+  *{box-sizing:border-box;}
+
+  html,body{
+    margin:0;
+    padding:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:var(--bg-deep);
+    font-family:'Segoe UI',Arial,sans-serif;
+    color:var(--text-main);
+  }
+
+  #app{
+    position:relative;
+    width:100vw;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    background:
+      radial-gradient(circle at 20% 15%, rgba(91,154,155,0.14), transparent 45%),
+      radial-gradient(circle at 85% 85%, rgba(207,154,82,0.11), transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(91,154,155,0.06), transparent 60%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 3px),
+      linear-gradient(160deg, var(--bg-deep), var(--bg-mid));
+  }
+
+  /* ---------- AI ambience background layer ---------- */
+  .bg-fx{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
+  .bg-code{
+    position:absolute;
+    top:0;
+    width:34px;
+    text-align:center;
+    font-family:'Consolas','Courier New',monospace;
+    font-size:11px;
+    line-height:1.6;
+    color:var(--teal);
+    opacity:0.1;
+    letter-spacing:1px;
+    white-space:normal;
+    animation:codeDrift 46s linear infinite;
+  }
+  .bg-code.left{left:16px;}
+  .bg-code.right{right:16px;color:var(--amber);animation-duration:54s;}
+  @keyframes codeDrift{
+    0%{transform:translateY(0);}
+    100%{transform:translateY(-50%);}
+  }
+  .bg-node{position:absolute;border-radius:50%;animation:nodeFloat linear infinite;}
+  @keyframes nodeFloat{
+    0%,100%{transform:translateY(0) scale(1);opacity:0.2;}
+    50%{transform:translateY(-16px) scale(1.2);opacity:0.65;}
+  }
+  .bg-sweep{
+    position:absolute;
+    top:0;left:-35%;
+    width:35%;height:100%;
+    background:linear-gradient(100deg, transparent, rgba(91,154,155,0.05), transparent);
+    animation:sweep 10s ease-in-out infinite;
+  }
+  @keyframes sweep{
+    0%{left:-35%;}
+    100%{left:130%;}
+  }
+
+  /* ---------- HUD frame ---------- */
+  .hud-bar{
+    position:relative;
+    z-index:2;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:14px 26px;
+    font-family:'Consolas','Courier New',monospace;
+    font-size:0.88rem;
+    letter-spacing:1px;
+    color:var(--text-dim);
+    border-bottom:1px solid var(--line);
+    background:rgba(0,0,0,0.15);
+    flex:0 0 auto;
+    gap:20px;
+  }
+  .hud-bar.bottom{
+    border-bottom:none;
+    border-top:1px solid var(--line);
+  }
+  .hud-dot{
+    display:inline-block;
+    width:8px;height:8px;
+    border-radius:50%;
+    background:var(--brick);
+    margin-right:8px;
+    animation:blink 1.6s infinite;
+    vertical-align:middle;
+  }
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.25;}}
+
+  .timer-chip{
+    font-weight:700;
+    color:var(--amber);
+    letter-spacing:1px;
+    border:1px solid var(--line);
+    background:rgba(0,0,0,0.2);
+    padding:4px 12px;
+    border-radius:3px;
+  }
+  .timer-chip.critical{color:var(--brick);border-color:var(--brick);animation:blink 1s infinite;}
+
+  .corner{
+    position:absolute;
+    z-index:2;
+    width:34px;height:34px;
+    border:2px solid var(--teal-dim);
+    opacity:0.6;
+  }
+  .corner.tl{top:52px;left:14px;border-right:none;border-bottom:none;}
+  .corner.tr{top:52px;right:14px;border-left:none;border-bottom:none;}
+  .corner.bl{bottom:52px;left:14px;border-right:none;border-top:none;}
+  .corner.br{bottom:52px;right:14px;border-left:none;border-top:none;}
+
+  /* ---------- main content ---------- */
+  main{
+    position:relative;
+    z-index:2;
+    flex:1 1 auto;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:20px 6vw;
+    gap:0;
+    min-height:0;
+    overflow-y:auto;
+  }
+  main::-webkit-scrollbar{width:6px;}
+  main::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px;}
+
+  .eye-mark{
+    font-size:clamp(2.2rem,4vw,3.2rem);
+    line-height:1;
+    color:var(--amber);
+    margin-bottom:6px;
+    text-shadow:0 0 22px rgba(207,154,82,0.35);
+  }
+
+  .mission-kicker{
+    font-family:'Consolas','Courier New',monospace;
+    letter-spacing:4px;
+    font-size:clamp(0.85rem,1.4vw,1.05rem);
+    color:var(--teal);
+    margin-bottom:10px;
+    text-transform:uppercase;
+  }
+  .tell-encourage{
+    font-size:clamp(0.85rem,1.3vw,1.05rem);
+    color:var(--amber);
+    font-style:italic;
+    max-width:600px;
+  }
+
+  h1.title{
+    font-size:clamp(3.2rem,9vw,6.8rem);
+    line-height:0.95;
+    margin:0 0 14px 0;
+    font-weight:900;
+    letter-spacing:2px;
+    color:var(--text-main);
+    text-shadow:2px 0 var(--brick), -2px 0 var(--teal);
+  }
+
+  p.briefing{
+    max-width:820px;
+    font-size:clamp(1.2rem,2.1vw,1.65rem);
+    line-height:1.5;
+    color:var(--text-dim);
+    margin:0 0 26px 0;
+    font-weight:500;
+  }
+
+  p.briefing strong{color:var(--text-main);}
+
+  .stat-row{
+    display:flex;
+    gap:28px;
+    margin-bottom:34px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  .stat{
+    font-family:'Consolas','Courier New',monospace;
+    font-size:0.98rem;
+    color:var(--text-dim);
+    border:1px solid var(--line);
+    background:rgba(0,0,0,0.18);
+    padding:10px 18px;
+    border-radius:3px;
+    letter-spacing:0.5px;
+  }
+  .stat b{color:var(--amber);}
+
+  /* ---------- buttons ---------- */
+  .button-zone{
+    position:relative;
+    min-height:110px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .start-btn{
+    font-family:'Consolas','Courier New',monospace;
+    font-size:clamp(1.2rem,2.2vw,1.55rem);
+    letter-spacing:3px;
+    font-weight:700;
+    padding:20px 52px;
+    border-radius:4px;
+    cursor:pointer;
+    text-transform:uppercase;
+    transition:transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .start-btn:hover{transform:translateY(-2px);}
+  .start-btn:disabled{opacity:0.5;cursor:default;transform:none;}
+
+  .start-btn.fake{
+    background:var(--panel);
+    color:var(--text-main);
+    border:2px solid var(--amber);
+    box-shadow:0 0 18px rgba(207,154,82,0.25);
+  }
+
+  .start-btn.real{
+    background:var(--teal-dim);
+    color:#eafffb;
+    border:2px solid var(--teal);
+    box-shadow:0 0 22px rgba(91,154,155,0.4);
+  }
+
+  .hidden{display:none !important;}
+
+  @keyframes glitchOut{
+    0%{transform:translate(0,0);}
+    20%{transform:translate(-4px,2px) skewX(2deg);}
+    40%{transform:translate(3px,-2px) skewX(-3deg);}
+    60%{transform:translate(-2px,0) skewX(1deg);}
+    80%{transform:translate(2px,1px);}
+    100%{opacity:0;transform:scale(0.9);}
+  }
+  .glitch-out{animation:glitchOut 0.45s forwards;}
+
+  @keyframes revealIn{
+    0%{opacity:0;transform:scale(0.85);}
+    60%{opacity:1;transform:scale(1.04);}
+    100%{opacity:1;transform:scale(1);}
+  }
+  .reveal{animation:revealIn 0.5s ease forwards;}
+
+  .verified-tag{
+    display:block;
+    font-size:0.65rem;
+    letter-spacing:2px;
+    color:var(--teal);
+    margin-top:14px;
+    opacity:0;
+    transition:opacity 0.4s ease 0.3s;
+  }
+  .verified-tag.show{opacity:1;}
+
+  /* ---------- flash overlay ---------- */
+  .flash-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(20,10,8,0.94);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.12s ease;
+    z-index:50;
+    text-align:center;
+    padding:0 5vw;
+  }
+  .flash-overlay.active{opacity:1;}
+  .flash-text{
+    font-size:clamp(2rem,6vw,4rem);
+    font-weight:900;
+    line-height:1.15;
+    color:var(--text-main);
+    text-shadow:3px 0 var(--brick), -3px 0 var(--teal);
+    animation:flicker 0.18s infinite;
+  }
+  .flash-text.small{font-size:clamp(1.4rem,4vw,2.4rem);}
+  @keyframes flicker{
+    0%,100%{opacity:1;}
+    45%{opacity:0.85;}
+    50%{opacity:1;}
+    55%{opacity:0.9;}
+  }
+
+  /* ---------- loading placeholder ---------- */
+  .loading-block{animation:revealIn 0.6s ease forwards;}
+  .loading-tag{
+    font-family:'Consolas','Courier New',monospace;
+    color:var(--teal);
+    letter-spacing:4px;
+    margin-bottom:16px;
+  }
+  .loading-block h2{
+    font-size:clamp(2rem,5vw,3.2rem);
+    margin:0 0 8px 0;
+  }
+  .loading-sub{color:var(--text-dim);}
+
+  /* ---------- ticker ---------- */
+  .ticker-track{
+    display:inline-block;
+    white-space:nowrap;
+    padding-left:100%;
+    animation:ticker 26s linear infinite;
+  }
+  @keyframes ticker{
+    0%{transform:translateX(0);}
+    100%{transform:translateX(-100%);}
+  }
+  .ticker-wrap{overflow:hidden;flex:1;}
+
+  /* ---------- generic quiz shell ---------- */
+  .quiz-shell{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:22px;
+    width:100%;
+    animation:revealIn 0.4s ease forwards;
+  }
+
+  /* ---------- screen 2 : avatar + slider ---------- */
+  .avatar-block{
+    display:flex;
+    align-items:center;
+    gap:16px;
+  }
+  .avatar-ring{
+    position:relative;
+    width:104px;height:104px;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:conic-gradient(from 0deg, var(--teal-dim), transparent 55%, var(--teal-dim));
+    animation:spin 4s linear infinite;
+    flex:0 0 auto;
+  }
+  .avatar-ring::after{
+    content:'';
+    position:absolute;inset:6px;
+    border-radius:50%;
+    background:var(--bg-mid);
+  }
+  .avatar-core{
+    position:relative;
+    z-index:1;
+    width:88px;
+    height:88px;
+    border-radius:50%;
+    object-fit:cover;
+    object-position:top center;
+    border:1px solid var(--line);
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .avatar-name{text-align:left;font-family:'Consolas','Courier New',monospace;}
+  .avatar-name .a-name{display:block;font-size:1.1rem;color:var(--text-main);letter-spacing:2px;font-weight:700;}
+  .avatar-name .a-role{display:block;font-size:0.7rem;color:var(--teal);letter-spacing:1.5px;}
+
+  .speech-bubble{
+    max-width:640px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-left:3px solid var(--teal);
+    padding:20px 26px;
+    border-radius:6px;
+    font-size:clamp(1.12rem,1.8vw,1.4rem);
+    line-height:1.5;
+    color:var(--text-main);
+    transition:opacity 0.2s ease;
+  }
+
+  .slider-row{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    width:100%;
+    max-width:420px;
+  }
+  .slider-row input[type=range]{
+    width:100%;
+    accent-color:var(--teal);
+    height:6px;
+    cursor:pointer;
+  }
+  .slider-value{
+    font-family:'Consolas','Courier New',monospace;
+    letter-spacing:1px;
+    color:var(--text-dim);
+    font-size:1.08rem;
+  }
+  .slider-value b{color:var(--amber);font-size:1.15rem;}
+
+  /* ---------- quiz image screens ---------- */
+  .exhibit-tag{
+    font-family:'Consolas','Courier New',monospace;
+    letter-spacing:3px;
+    color:var(--teal);
+    font-size:0.98rem;
+    text-transform:uppercase;
+  }
+  .image-frame{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:10px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.35);
+    line-height:0;
+  }
+  .image-frame img{
+    display:block;
+    max-height:58vh;
+    max-width:min(70vw,680px);
+    width:auto;
+    height:auto;
+    border-radius:3px;
+    object-fit:contain;
+  }
+
+  .verdict-row{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;}
+  .verdict-btn{
+    font-family:'Consolas','Courier New',monospace;
+    font-size:1.12rem;
+    letter-spacing:2px;
+    font-weight:700;
+    padding:16px 34px;
+    border-radius:4px;
+    cursor:pointer;
+    text-transform:uppercase;
+    background:var(--panel);
+    transition:transform 0.15s ease;
+  }
+  .verdict-btn:hover{transform:translateY(-2px);}
+  .verdict-btn:disabled{opacity:0.5;cursor:default;transform:none;}
+  .verdict-btn.real{border:2px solid var(--teal);color:#eafffb;}
+  .verdict-btn.fake{border:2px solid var(--brick);color:var(--text-main);}
+  .verdict-btn.confused{border:2px solid var(--amber);color:var(--text-main);}
+
+  /* ---------- score screen ---------- */
+  .score-big{
+    font-family:'Consolas','Courier New',monospace;
+    font-size:clamp(2rem,4.4vw,2.9rem);
+  }
+  .score-big b{color:var(--teal);font-size:1.3em;}
+  .score-compare{color:var(--text-dim);max-width:640px;font-size:1.18rem;}
+  .score-encourage{color:var(--amber);max-width:640px;font-size:1.05rem;font-style:italic;}
+  .chip-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+  .result-chip{
+    font-family:'Consolas','Courier New',monospace;
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:9px 15px;
+    font-size:0.9rem;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    min-width:64px;
+  }
+  .result-chip.good{border-color:var(--teal);color:var(--teal);}
+  .result-chip.bad{border-color:var(--brick);color:var(--brick);}
+
+  /* ---------- screen 10 : deepfake briefing + video ---------- */
+  .info-shell{gap:12px;max-width:820px;}
+  .info-shell .mission-kicker{margin-bottom:0;}
+  .info-shell .briefing{
+    font-size:clamp(0.95rem,1.4vw,1.15rem);
+    line-height:1.45;
+    max-width:740px;
+    margin:0;
+  }
+  .info-shell .stat-row{gap:14px;margin-bottom:0;}
+  .info-shell .stat{font-size:0.82rem;padding:7px 14px;}
+  .video-frame{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:min(40vw,440px);
+    aspect-ratio:16/9;
+    border:1px solid var(--line);
+    border-radius:6px;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,0.35);
+    background-color:#000;
+    background-size:cover;
+    background-position:center;
+    text-decoration:none;
+  }
+  .video-play-overlay{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    width:100%;
+    height:100%;
+    justify-content:center;
+    background:rgba(15,18,20,0.4);
+    color:var(--text-main);
+    font-family:'Consolas','Courier New',monospace;
+    letter-spacing:2px;
+    font-size:0.8rem;
+    font-weight:700;
+    transition:background 0.15s ease;
+  }
+  .video-frame:hover .video-play-overlay{background:rgba(15,18,20,0.55);}
+  .play-btn{
+    width:56px;height:56px;
+    border-radius:50%;
+    background:rgba(234,228,211,0.92);
+    color:#1e242a;
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.3rem;
+    box-shadow:0 0 20px rgba(0,0,0,0.4);
+    transition:transform 0.15s ease;
+  }
+  .video-frame:hover .play-btn{transform:scale(1.08);}
+  .info-shell .start-btn{padding:12px 36px;font-size:1rem;}
+  .video-frame iframe{width:100%;height:100%;border:0;display:block;}
+
+  /* ---------- Phase 2 : Tell Library ---------- */
+  .tell-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:16px;
+    width:100%;
+    max-width:820px;
+  }
+  .tell-card{
+    position:relative;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:18px 10px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    cursor:pointer;
+    transition:transform 0.15s ease, border-color 0.15s ease;
+  }
+  .tell-card:hover{transform:translateY(-3px);border-color:var(--teal);}
+  .tell-card.locked{opacity:0.45;cursor:not-allowed;}
+  .tell-card.locked:hover{transform:none;border-color:var(--line);}
+  .lock-badge{
+    font-family:'Consolas','Courier New',monospace;
+    font-size:0.68rem;
+    letter-spacing:1px;
+    color:var(--brick);
+    margin-top:2px;
+  }
+  .tell-card .t-icon{font-size:2.1rem;}
+  .tell-card .t-name{font-size:0.98rem;font-weight:700;text-align:center;}
+  .tell-card .t-diff{
+    font-family:'Consolas','Courier New',monospace;
+    font-size:0.68rem;
+    letter-spacing:1px;
+    padding:3px 9px;
+    border-radius:3px;
+    border:1px solid var(--line);
+  }
+  .t-diff.diff-easy{border-color:var(--teal);color:var(--teal);}
+  .t-diff.diff-medium{border-color:var(--amber);color:var(--amber);}
+  .t-diff.diff-hard{border-color:var(--brick);color:var(--brick);}
+  .tell-card .t-check{
+    position:absolute;top:6px;right:8px;
+    color:var(--teal);font-size:1rem;font-weight:700;
+  }
+  .tell-progress{
+    font-family:'Consolas','Courier New',monospace;
+    font-size:0.98rem;
+    color:var(--text-dim);
+    letter-spacing:1px;
+  }
+  .tell-progress b{color:var(--amber);}
+
+  .tell-shell{max-width:680px;gap:14px;}
+  .tell-title{font-size:clamp(1.4rem,2.9vw,1.95rem);margin:0;}
+  .clip-meta{
+    font-family:'Consolas','Courier New',monospace;
+    font-size:0.85rem;
+    color:var(--text-dim);
+  }
+  .clip-meta span{color:var(--teal);}
+  .tell-block-title{
+    font-family:'Consolas','Courier New',monospace;
+    letter-spacing:2px;
+    font-size:0.88rem;
+    color:var(--teal);
+    text-transform:uppercase;
+    align-self:flex-start;
+    margin-top:4px;
+  }
+  .answer-key{
+    max-width:620px;
+    background:rgba(207,154,82,0.1);
+    border:1px solid var(--amber);
+    border-radius:6px;
+    padding:16px 20px;
+    font-size:1rem;
+    line-height:1.45;
+    color:var(--text-main);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:14px;
+  }
+  .tell-nav-row{display:flex;gap:16px;margin-top:6px;}
+
+  /* ---------- screenshot placeholders ---------- */
+  .placeholder-row{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;width:100%;max-width:640px;}
+  .placeholder-img{
+    flex:1 1 240px;
+    min-height:150px;
+    background:repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0 10px, rgba(255,255,255,0.045) 10px 20px);
+    border:2px dashed var(--line);
+    border-radius:8px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    padding:18px;
+    color:var(--text-dim);
+  }
+  .placeholder-img .ph-icon{font-size:2.2rem;opacity:0.55;}
+  .placeholder-img .ph-caption{font-size:0.92rem;line-height:1.4;text-align:center;color:var(--text-main);}
+
+  /* ---------- self-check ---------- */
+  .self-check{width:100%;display:flex;flex-direction:column;align-items:center;gap:10px;}
+  .self-check-label{
+    font-family:'Consolas','Courier New',monospace;
+    letter-spacing:2px;
+    font-size:0.85rem;
+    color:var(--amber);
+  }
+  .self-check-row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;}
+  .self-check-feedback{
+    font-size:0.98rem;
+    color:var(--teal);
+    min-height:1.4em;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="bg-fx" aria-hidden="true">
+    <div class="bg-code left" id="bgCodeLeft"></div>
+    <div class="bg-code right" id="bgCodeRight"></div>
+    <div class="bg-sweep"></div>
+    <div class="bg-nodes" id="bgNodes"></div>
+  </div>
+
+  <div class="hud-bar top">
+    <span><span class="hud-dot"></span>MISSION FILE // EAGLE-EYE-01</span>
+    <span class="timer-chip hidden" id="timerChip">⏱ TIME REMAINING: 30:00</span>
+    <span>CLEARANCE&nbsp;LEVEL:&nbsp;TRUTH&nbsp;SCIENTIST&nbsp;IN&nbsp;TRAINING</span>
+  </div>
+
+  <div class="corner tl"></div>
+  <div class="corner tr"></div>
+  <div class="corner bl"></div>
+  <div class="corner br"></div>
+
+  <main>
+    <div class="intro-screen" id="screenRoot">
+      <div class="eye-mark">◎</div>
+      <div class="mission-kicker">Mission Briefing</div>
+      <h1 class="title">THE EAGLE EYE</h1>
+      <p class="briefing">
+        Every second, synthetic faces and voices slip into feeds that look completely real.
+        Your job as a junior truth scientist is to build the eye that can tell them apart —
+        <strong>not by gut feeling, but by evidence.</strong>
+        One habit will get tested before anything else: the impulse to trust the first button you see.
+      </p>
+
+      <div class="stat-row">
+        <div class="stat">TARGETS: <b>6 IMAGE PAIRS</b></div>
+        <div class="stat">SKILL: <b>FORENSIC OBSERVATION</b></div>
+        <div class="stat">STATUS: <b>UNVERIFIED</b></div>
+      </div>
+
+      <div class="button-zone">
+        <button class="start-btn fake" id="fakeStartBtn">Start Mission</button>
+        <button class="start-btn real hidden" id="realStartBtn">Start Mission</button>
+      </div>
+      <span class="verified-tag" id="verifiedTag"></span>
+    </div>
+  </main>
+
+  <div class="hud-bar bottom">
+    <div class="ticker-wrap">
+      <div class="ticker-track">
+        SIGNAL STATUS: NOMINAL &nbsp;&nbsp;·&nbsp;&nbsp; REMINDER: NOTHING ON THIS SCREEN HAS BEEN VERIFIED YET &nbsp;&nbsp;·&nbsp;&nbsp; TRUST IS NOT A DETECTION METHOD &nbsp;&nbsp;·&nbsp;&nbsp; AWAITING TRUTH SCIENTIST INPUT &nbsp;&nbsp;·&nbsp;&nbsp;
+      </div>
+    </div>
+  </div>
+
+  <div class="flash-overlay" id="flashOverlay">
+    <div class="flash-text" id="flashText">YOU NEVER KNOW<br>WHEN SOMETHING IS FAKE</div>
+  </div>
+
+</div>
+
+<script>
+  /* ---------------- shared state ---------------- */
+  const state = {
+    confidence: 5,
+    timeLeft: 30 * 60,
+    timerHandle: null,
+    quizIndex: 0,
+    score: 0,
+    answers: []
+  };
+
+  const IMAGES = [
+    { file: 'Sachin fake.png',   type: 'fake' },
+    { file: 'modi ji real.png',  type: 'real' },
+    { file: 'Kohli fake.png',    type: 'fake' },
+    { file: 'deepika real.png',  type: 'real' },
+    { file: 'SRK real.png',      type: 'real' },
+    { file: 'obama fake.png',    type: 'fake' }
+  ];
+
+  const QUIZ_ENCOURAGE = [
+    'Look for one hard, observable detail — not a feeling.',
+    'Trust the evidence, not the gut reaction.',
+    'Take a breath and study it like an analyst, not a viewer.',
+    'You have caught tricky ones before — you can catch this one too.'
+  ];
+
+  const screenRoot = document.getElementById('screenRoot');
+  const flash = document.getElementById('flashOverlay');
+  const flashText = document.getElementById('flashText');
+  const timerChip = document.getElementById('timerChip');
+
+  /* ---------------- background ambience ---------------- */
+  function buildCodeColumn() {
+    let out = '';
+    for (let i = 0; i < 70; i++) {
+      let line = '';
+      for (let j = 0; j < 5; j++) line += Math.round(Math.random());
+      out += line + '<br>';
+    }
+    return out;
+  }
+  const codeHTML1 = buildCodeColumn();
+  const codeHTML2 = buildCodeColumn();
+  document.getElementById('bgCodeLeft').innerHTML = codeHTML1 + codeHTML1;
+  document.getElementById('bgCodeRight').innerHTML = codeHTML2 + codeHTML2;
+
+  const bgNodes = document.getElementById('bgNodes');
+  for (let i = 0; i < 22; i++) {
+    const n = document.createElement('div');
+    n.className = 'bg-node';
+    const size = 3 + Math.random() * 5;
+    n.style.width = size + 'px';
+    n.style.height = size + 'px';
+    n.style.left = Math.random() * 100 + '%';
+    n.style.top = Math.random() * 100 + '%';
+    n.style.background = Math.random() > 0.6 ? 'var(--amber)' : 'var(--teal)';
+    n.style.boxShadow = '0 0 12px 2px currentColor';
+    n.style.opacity = '0.4';
+    n.style.animationDuration = (4 + Math.random() * 5) + 's';
+    n.style.animationDelay = (Math.random() * 5) + 's';
+    bgNodes.appendChild(n);
+  }
+
+  function pickOne(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+  function flashMessage(html, duration, small) {
+    return new Promise(resolve => {
+      flashText.innerHTML = html;
+      flashText.classList.toggle('small', !!small);
+      flash.classList.add('active');
+      setTimeout(() => {
+        flash.classList.remove('active');
+        setTimeout(resolve, 150);
+      }, duration);
+    });
+  }
+
+  /* ---------------- timer ---------------- */
+  function formatTime(sec) {
+    const m = Math.floor(sec / 60).toString().padStart(2, '0');
+    const s = Math.floor(sec % 60).toString().padStart(2, '0');
+    return m + ':' + s;
+  }
+
+  function updateTimerDisplay() {
+    timerChip.textContent = '⏱ TIME REMAINING: ' + formatTime(state.timeLeft);
+    timerChip.classList.toggle('critical', state.timeLeft <= 60);
+  }
+
+  function startTimer() {
+    if (state.timerHandle) return;
+    timerChip.classList.remove('hidden');
+    updateTimerDisplay();
+    state.timerHandle = setInterval(() => {
+      state.timeLeft = Math.max(0, state.timeLeft - 1);
+      updateTimerDisplay();
+      if (state.timeLeft === 0) {
+        clearInterval(state.timerHandle);
+        state.timerHandle = null;
+      }
+    }, 1000);
+  }
+
+  /* ---------------- screen 1 (already in DOM) ---------------- */
+  const fakeBtn = document.getElementById('fakeStartBtn');
+  const realBtn = document.getElementById('realStartBtn');
+  const verifiedTag = document.getElementById('verifiedTag');
+
+  fakeBtn.addEventListener('click', () => {
+    fakeBtn.disabled = true;
+    fakeBtn.classList.add('glitch-out');
+
+    setTimeout(() => {
+      flash.classList.add('active');
+    }, 300);
+
+    setTimeout(() => {
+      flash.classList.remove('active');
+      fakeBtn.classList.add('hidden');
+      realBtn.classList.remove('hidden');
+      realBtn.classList.add('reveal');
+      verifiedTag.textContent = 'IDENTITY CONFIRMED — THIS ONE IS REAL';
+      verifiedTag.classList.add('show');
+    }, 2100);
+  });
+
+  realBtn.addEventListener('click', () => {
+    realBtn.disabled = true;
+    startTimer();
+    renderScreen2();
+  });
+
+  /* ---------------- screen 2 : confidence + avatar ---------------- */
+  function renderScreen2() {
+    screenRoot.innerHTML = `
+      <div class="quiz-shell">
+        <div class="avatar-block">
+          <div class="avatar-ring"><img class="avatar-core" src="${encodeURI('Real and fake assets/Deepfake mission avatar.png')}" alt="Truth scientist AI avatar"></div>
+          <div class="avatar-name">
+            <span class="a-name">ARIA</span>
+            <span class="a-role">SENIOR TRUTH SCIENTIST AI</span>
+          </div>
+        </div>
+        <div class="speech-bubble" id="ariaSpeech">
+          Rate yourself honestly, truth scientist. On a scale of 1 to 10 — how confident are you that you can spot a fake on sight?
+        </div>
+        <div class="slider-row">
+          <input type="range" min="1" max="10" value="5" id="confidenceSlider">
+          <div class="slider-value" id="confidenceValue">CONFIDENCE: <b>5</b> / 10</div>
+        </div>
+        <button class="start-btn real" id="acceptChallengeBtn">Accept The Challenge</button>
+      </div>`;
+
+    const slider = document.getElementById('confidenceSlider');
+    const sliderValue = document.getElementById('confidenceValue');
+    const acceptBtn = document.getElementById('acceptChallengeBtn');
+    const speech = document.getElementById('ariaSpeech');
+
+    slider.addEventListener('input', () => {
+      state.confidence = Number(slider.value);
+      sliderValue.innerHTML = 'CONFIDENCE: <b>' + state.confidence + '</b> / 10';
+    });
+
+    acceptBtn.addEventListener('click', async () => {
+      acceptBtn.disabled = true;
+      slider.disabled = true;
+      speech.style.opacity = 0;
+      setTimeout(() => {
+        speech.textContent = 'Good. Watch closely — you are being evaluated from the very first click.';
+        speech.style.opacity = 1;
+      }, 220);
+
+      await flashMessage('EVERYTHING YOU CLICK ISN\'T FAKE EITHER,<br>WELCOME IN.', 1900);
+      renderQuizScreen(0);
+    });
+  }
+
+  /* ---------------- screens 3-8 : image verdict quiz ---------------- */
+  function renderQuizScreen(idx) {
+    state.quizIndex = idx;
+    const item = IMAGES[idx];
+    const src = encodeURI('Real and fake assets/' + item.file);
+
+    screenRoot.innerHTML = `
+      <div class="quiz-shell">
+        <div class="exhibit-tag">EXHIBIT 0${idx + 1} OF 0${IMAGES.length}</div>
+        <div class="tell-encourage">${pickOne(QUIZ_ENCOURAGE)}</div>
+        <div class="image-frame">
+          <img src="${src}" alt="Evidence photograph">
+        </div>
+        <div class="verdict-row">
+          <button class="verdict-btn real" data-choice="real">Real</button>
+          <button class="verdict-btn fake" data-choice="fake">Fake</button>
+          <button class="verdict-btn confused" data-choice="confused">Confused</button>
+        </div>
+      </div>`;
+
+    const buttons = screenRoot.querySelectorAll('.verdict-btn');
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => handleVerdict(btn.dataset.choice, idx, buttons));
+    });
+  }
+
+  const ENCOURAGE = {
+    correct: ['Sharp eyes.', 'That is the analyst instinct kicking in.', 'Exactly the kind of catch we need.'],
+    incorrect: ['Good try — these get easier to spot with practice.', 'Close. Log it and keep watching.', 'Deepfakes are built to fool you — one miss will not break your streak.'],
+    confused: ['Fair call — some of these are genuinely tricky.', 'Honest answer. Flagging uncertainty is real analyst behavior.']
+  };
+
+  async function handleVerdict(choice, idx, buttons) {
+    buttons.forEach(b => (b.disabled = true));
+    const item = IMAGES[idx];
+    const correct = choice === item.type;
+    state.score += correct ? 1 : 0;
+    state.answers.push({ file: item.file, type: item.type, choice, correct });
+
+    const headline = correct ? 'CORRECT' : (choice === 'confused' ? 'LOGGED AS CONFUSED' : 'INCORRECT');
+    const pool = correct ? ENCOURAGE.correct : (choice === 'confused' ? ENCOURAGE.confused : ENCOURAGE.incorrect);
+    const msg = headline +
+      '<br><span style="font-size:0.55em">THIS WAS ' + item.type.toUpperCase() + '</span>' +
+      '<br><span style="font-size:0.38em;opacity:0.85">' + pickOne(pool) + '</span>';
+
+    await flashMessage(msg, 1500, true);
+
+    if (idx < IMAGES.length - 1) {
+      renderQuizScreen(idx + 1);
+    } else {
+      renderScoreScreen();
+    }
+  }
+
+  /* ---------------- screen 9 : score ---------------- */
+  function renderScoreScreen() {
+    const total = IMAGES.length;
+    const accuracy = Math.round((state.score / total) * 100);
+
+    let encourageLine;
+    if (accuracy >= 80) encourageLine = 'Elite instincts already — the Tell Library is about to make them razor sharp.';
+    else if (accuracy >= 50) encourageLine = 'Solid start. This is exactly the gap the Tell Library closes next.';
+    else encourageLine = 'This is precisely why we drill the tells next — you are about to get much sharper.';
+
+    const chips = state.answers.map(a => `
+      <div class="result-chip ${a.correct ? 'good' : 'bad'}">
+        <span>${a.correct ? '✓' : '✗'}</span>
+        <span>${a.choice.toUpperCase()}</span>
+      </div>`).join('');
+
+    screenRoot.innerHTML = `
+      <div class="quiz-shell">
+        <div class="mission-kicker">Debrief</div>
+        <h1 class="title" style="font-size:clamp(1.8rem,4.4vw,3.2rem);text-shadow:1px 0 var(--brick), -1px 0 var(--teal);">
+          Your intuition isn't broken,<br>the algorithm is
+        </h1>
+        <div class="score-big"><b>${state.score}</b> / ${total} CORRECT</div>
+        <div class="score-compare">
+          You rated your confidence at <b style="color:var(--amber)">${state.confidence}/10</b> before we started —
+          your actual accuracy was <b style="color:var(--teal)">${accuracy}%</b>.
+        </div>
+        <div class="score-encourage">${encourageLine}</div>
+        <div class="chip-row">${chips}</div>
+        <button class="start-btn real" id="nextAfterScoreBtn">Next</button>
+      </div>`;
+
+    document.getElementById('nextAfterScoreBtn').addEventListener('click', () => {
+      renderScreen10();
+    });
+  }
+
+  /* ---------------- screen 10 : what is a deepfake ---------------- */
+  function renderScreen10() {
+    screenRoot.innerHTML = `
+      <div class="quiz-shell info-shell">
+        <div class="mission-kicker">Field Briefing</div>
+        <h1 class="title" style="font-size:clamp(1.4rem,3.2vw,2.1rem);margin:0;">WHAT IS A DEEPFAKE?</h1>
+        <p class="briefing">
+          A deepfake is audio or video generated by AI to swap or fabricate a person's face, voice, or actions —
+          convincing enough to pass as real. It's dangerous because it weaponizes trust: a fake clip of a CEO,
+          a relative, or an official can move markets or drain a bank account before anyone checks it's fabricated.
+        </p>
+        <div class="stat-row">
+          <div class="stat">DEEPFAKE FILES SHARED ONLINE, 2023: <b>~8 MILLION</b></div>
+          <div class="stat">SINGLE DEEPFAKE VIDEO-CALL SCAM, 2024: <b>$25M LOST</b></div>
+        </div>
+        <div class="video-frame">
+          <iframe src="https://www.youtube.com/embed/WFc6t-c892A" title="Deepfake explainer video"
+            frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen></iframe>
+        </div>
+        <button class="start-btn real" id="nextAfterVideoBtn">Next</button>
+      </div>`;
+
+    document.getElementById('nextAfterVideoBtn').addEventListener('click', () => {
+      renderTellGrid();
+    });
+  }
+
+  /* ---------------- Phase 2 : the Tell Library ---------------- */
+  const TELLS = [
+    {
+      key: 'teeth', icon: '🦷', name: 'Teeth Drift', difficulty: 'Medium',
+      video: { id: 'VWrhRBb-1Ig', title: 'Bill Hader channels Tom Cruise [DeepFake]', creator: 'Ctrl Shift Face' },
+      timestamp: 'Any close-up while he is mid-sentence, ~0:05–0:25',
+      observe: 'Pause on a wide-mouth vowel sound. Watch individual teeth — do their width, spacing, or edges change from one frame to the next instead of staying rigid?',
+      screenshots: [
+        'Freeze on an open-mouth vowel frame. Circle 2–3 individual teeth and label it "Shape A."',
+        'Freeze the next open-mouth frame (about half a second later). Circle the same teeth as "Shape B" and compare.'
+      ],
+      why: 'The model redraws the mouth region on every frame instead of tracking one consistent 3D tooth shape, so small inconsistencies slip through, especially during fast speech.',
+      discussion: 'Why would teeth be harder for an AI to fake convincingly than something like a still forehead?',
+      answerKey: 'Teeth are small, high-contrast, and change shape rapidly with speech, leaving very little margin for error. A forehead is large, smooth, and barely moves, so small mistakes are far less visible there.'
+    },
+    {
+      key: 'blink', icon: '👁️', name: 'The Blink Problem', difficulty: 'Easy',
+      video: { id: 'cQ54GDm1eL0', title: 'You Won’t Believe What Obama Says In This Video!', creator: 'BuzzFeedVideo / Jordan Peele' },
+      timestamp: 'Watch every blink between 0:00–0:30',
+      observe: 'Count the blinks in 15 seconds and check whether both eyelids close to the same depth, at the same speed, every time.',
+      screenshots: [
+        'Freeze mid-blink. Circle both eyes and mark whichever eyelid looks more closed than the other.',
+        'Freeze the very next open-eye frame and compare eyelid position to a real reference photo of the same person.'
+      ],
+      why: 'Older training photo sets contain far more open-eye shots than mid-blink shots, so the model never fully learned a natural, symmetric blink — it often blinks too rarely or unevenly.',
+      discussion: 'If you were fixing a deepfake generator’s blink problem, what kind of training footage would you add?',
+      answerKey: 'Full video of real blink cycles from multiple angles and lighting conditions, so the model learns what an eyelid does across an entire blink rather than just "open" versus "closed" stills.'
+    },
+    {
+      key: 'edges', icon: '✂️', name: 'Ear and Hair Edges', difficulty: 'Medium',
+      video: { id: 'oxXpB9pSETo', title: 'This is not Morgan Freeman - A Deepfake Singularity', creator: 'deepfake research demo' },
+      timestamp: 'Any moment he turns or tilts his head',
+      observe: 'Watch the boundary where hair meets forehead, and where the ear meets the side of the face, during a head turn.',
+      screenshots: [
+        'Freeze mid head-turn. Circle the hair-to-forehead boundary and note any blur or flicker.',
+        'Zoom on one ear across two close frames — does its shape or edge sharpness stay consistent?'
+      ],
+      why: 'The generated face is blended onto the real frame one image at a time. Hair strands and ear cartilage are fine, irregular detail that’s hard to mask seamlessly, so the seam shows up as shimmer or softness exactly where the fake meets the real background.',
+      discussion: 'Why would a face-swap struggle more with hair than with a smooth cheek?',
+      answerKey: 'Hair is thin, high-frequency detail with countless tiny edges, so the blending mask needs pixel-level precision. A cheek is one smooth region that’s far easier to paint over convincingly.'
+    },
+    {
+      key: 'warp', icon: '🌊', name: 'Background Warp', difficulty: 'Hard',
+      video: { id: 'GMoOCKkcd_w', title: 'How to Detect Deepfakes: The Science of Recognizing AI Generated Content', creator: 'media literacy explainer' },
+      timestamp: 'Whenever a moving-background example is shown',
+      observe: 'Keep your eyes on a straight background line (a doorframe, a window edge) while the subject moves. Does it stay straight, or does it bend?',
+      screenshots: [
+        'Freeze a frame where the subject is mid-movement. Trace a straight background line with your finger or a ruler.',
+        'Freeze one second later and trace the same line again — compare the curve.'
+      ],
+      why: 'The model spends almost all of its effort rendering a convincing face and barely models the scene around it, so nearby pixels can subtly warp as the face-generation region shifts frame to frame.',
+      discussion: 'Why might background warping be an easier tell for a computer to catch than for a human eye?',
+      answerKey: 'A computer can measure the exact pixel position of a straight line in every frame and flag a sub-pixel bend instantly. A human eye is naturally drawn to the face and rarely tracks background geometry closely enough to notice.'
+    },
+    {
+      key: 'pbm', icon: '👄', name: 'The P–B–M Test', difficulty: 'Hard',
+      video: { id: 'iyiOVUbsPcM', title: 'Very realistic Tom Cruise Deepfake | AI Tom Cruise', creator: 'DeepTomCruise-style demo' },
+      timestamp: 'Any word containing a P, B, or M sound',
+      observe: 'Listen for a P, B, or M sound and watch whether the lips fully press together at the exact instant you hear it.',
+      screenshots: [
+        'Freeze the exact frame where the P/B/M sound plays. Circle the lips — are they fully closed?',
+        'Freeze 3–4 frames later and circle the lips again to see how late the closure actually happened.'
+      ],
+      why: 'P, B, and M are the only English sounds that require a hard, complete lip seal — every other sound allows a partly-open mouth. Voice-driven lip generators approximate mouth shape from audio, and that one exact, fully-closed instant is the easiest moment to miss or mistime.',
+      discussion: 'Why are P, B, and M harder for an AI lip-sync model to nail than a sound like "ah"?',
+      answerKey: '"Ah" allows a wide range of acceptable mouth shapes, so the model can approximate it. P, B, and M have exactly one correct mouth shape — fully closed lips — at one exact instant, leaving zero room to fudge it.'
+    },
+    {
+      key: 'shadow', icon: '🔺', name: 'Shadow Mismatch', difficulty: 'Medium',
+      video: { id: 'zXvwlgbYcbU', title: 'What Are Deepfakes? DEEPFAKE DETECTION & Digital Manipulation', creator: 'media literacy explainer' },
+      timestamp: 'Whenever a well-lit face example is shown against its background',
+      observe: 'Find the shadow under the nose and the shadow on the neck. Imagine a line from each shadow back to its light source — do both lines point the same direction?',
+      screenshots: [
+        'Freeze on a clear face shot. Draw an arrow from the nose shadow back toward where that light must be coming from.',
+        'Draw the same arrow from the neck or chin shadow and compare the two arrows.'
+      ],
+      why: 'A generated face is often lit by the training data’s "average" studio lighting, while the real body and background were filmed under different, actual lighting — so the two halves of the image disagree about where the light is coming from.',
+      discussion: 'If two shadows in the same photo point in different directions, what does that tell you about how the image was likely made?',
+      answerKey: 'It’s a strong sign the image was composited from at least two different sources — a generated face plus a real background or body — since one real light source can never cast shadows in two different directions at once.'
+    }
+  ];
+
+  state.tellsDone = new Array(TELLS.length).fill(false);
+  state.currentTellIdx = null;
+  state.currentTellOpenedAt = null;
+  state.gridTickHandle = null;
+
+  const TELL_LOCK_MS = 2 * 60 * 1000;
+
+  function openTell(idx) {
+    if (state.currentTellIdx !== idx) {
+      state.currentTellIdx = idx;
+      state.currentTellOpenedAt = Date.now();
+    }
+    renderTellStep(idx, 0);
+  }
+
+  function renderTellGrid() {
+    if (state.gridTickHandle) {
+      clearInterval(state.gridTickHandle);
+      state.gridTickHandle = null;
+    }
+
+    const doneCount = state.tellsDone.filter(Boolean).length;
+    const allDone = doneCount === TELLS.length;
+
+    const gateActive = state.currentTellIdx !== null;
+    const elapsed = gateActive ? Date.now() - state.currentTellOpenedAt : Infinity;
+    const remainingMs = TELL_LOCK_MS - elapsed;
+    const anyLocked = gateActive && remainingMs > 0;
+    const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
+
+    let gridEncourage;
+    if (allDone) gridEncourage = 'All six collected. You are ready for the next phase.';
+    else if (anyLocked) gridEncourage = `Spend at least 2 minutes with ${TELLS[state.currentTellIdx].name} before moving to another tell.`;
+    else if (doneCount === 0) gridEncourage = 'Pick any card to start — there is no wrong order.';
+    else gridEncourage = 'Nice progress — keep going, you are building real pattern recognition.';
+
+    const cards = TELLS.map((t, i) => {
+      const locked = anyLocked && i !== state.currentTellIdx;
+      return `
+      <div class="tell-card ${locked ? 'locked' : ''}" data-idx="${i}">
+        ${state.tellsDone[i] ? '<span class="t-check">✓</span>' : ''}
+        <span class="t-icon">${t.icon}</span>
+        <span class="t-name">${t.name}</span>
+        <span class="t-diff diff-${t.difficulty.toLowerCase()}">${t.difficulty.toUpperCase()}</span>
+        ${locked ? `<span class="lock-badge">🔒 ${formatTime(remainingSec)}</span>` : ''}
+      </div>`;
+    }).join('');
+
+    screenRoot.innerHTML = `
+      <div class="quiz-shell">
+        <div class="mission-kicker">Phase 2 · The Tell Library</div>
+        <h1 class="title" style="font-size:clamp(1.8rem,4vw,2.8rem);margin:0 0 4px 0;">DEEPFAKE DETECTIVE KIT</h1>
+        <p class="briefing" style="max-width:680px;font-size:clamp(0.95rem,1.4vw,1.15rem);margin-bottom:4px;">
+          Six tells. Six short clips. Open a card, watch closely, and log what you find.
+        </p>
+        <div class="tell-grid">${cards}</div>
+        <div class="tell-progress">TELLS COLLECTED: <b>${doneCount} / ${TELLS.length}</b></div>
+        <div class="tell-encourage">${gridEncourage}</div>
+        <button class="start-btn real ${allDone ? '' : 'hidden'}" id="continueAfterTellsBtn">Continue Mission</button>
+      </div>`;
+
+    screenRoot.querySelectorAll('.tell-card').forEach(card => {
+      const i = Number(card.dataset.idx);
+      card.addEventListener('click', () => {
+        if (card.classList.contains('locked')) {
+          const secsLeft = Math.max(1, Math.ceil((TELL_LOCK_MS - (Date.now() - state.currentTellOpenedAt)) / 1000));
+          flashMessage(
+            'STAY WITH THIS TELL A LITTLE LONGER<br><span style="font-size:0.5em">' +
+            TELLS[state.currentTellIdx].name.toUpperCase() + ' UNLOCKS THE REST IN ' + formatTime(secsLeft) + '</span>',
+            1700, true
+          );
+          return;
+        }
+        openTell(i);
+      });
+    });
+
+    if (anyLocked) {
+      state.gridTickHandle = setInterval(() => {
+        renderTellGrid();
+      }, 1000);
+    }
+
+    const continueBtn = document.getElementById('continueAfterTellsBtn');
+    if (continueBtn) {
+      continueBtn.addEventListener('click', () => {
+        screenRoot.innerHTML = `
+          <div class="loading-block">
+            <div class="loading-tag">KIT COMPLETE</div>
+            <h2>PHASE 3 LOADING…</h2>
+            <p class="loading-sub">Feeling vs. Proving</p>
+          </div>`;
+      });
+    }
+  }
+
+  const STEP_NAMES = ['WATCH', 'ANALYZE', 'DISCUSS'];
+  const STEP_ENCOURAGE = [
+    'Take your time — rewatch the clip as many times as you need.',
+    'Nice work slowing down to look closely. That is the skill we are building.',
+    'There is no wrong first guess. Think it through, then check yourself.'
+  ];
+  const SELF_CHECK_FEEDBACK = {
+    yes: 'Excellent — that is exactly the kind of reasoning real analysts use.',
+    somewhat: 'Good instinct — you are closer than you think. That gap closes fast with practice.',
+    no: 'No worries — noticing the pattern is step one. You will catch it next time.'
+  };
+
+  function renderTellStep(idx, step) {
+    if (state.gridTickHandle) {
+      clearInterval(state.gridTickHandle);
+      state.gridTickHandle = null;
+    }
+
+    const t = TELLS[idx];
+    const stepTag = `STEP ${step + 1} OF 3 · ${STEP_NAMES[step]}`;
+
+    let body = '';
+    if (step === 0) {
+      body = `
+        <div class="video-frame" style="width:min(42vw,460px)">
+          <iframe src="https://www.youtube.com/embed/${t.video.id}" title="${t.video.title}"
+            frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen></iframe>
+        </div>
+        <div class="clip-meta">${t.video.title} — <span>${t.video.creator}</span></div>
+        <div class="stat" style="margin:0">TIMESTAMP CUE: <b>${t.timestamp}</b></div>
+        <div class="speech-bubble" style="max-width:600px">${t.observe}</div>`;
+    } else if (step === 1) {
+      body = `
+        <div class="placeholder-row">
+          <div class="placeholder-img">
+            <span class="ph-icon">🖼️</span>
+            <span class="ph-caption">${t.screenshots[0]}</span>
+          </div>
+          <div class="placeholder-img">
+            <span class="ph-icon">🖼️</span>
+            <span class="ph-caption">${t.screenshots[1]}</span>
+          </div>
+        </div>
+        <div class="tell-block-title">Why This Flaw Happens</div>
+        <div class="speech-bubble" style="max-width:640px">${t.why}</div>`;
+    } else {
+      body = `
+        <div class="tell-block-title">Discussion Question</div>
+        <div class="speech-bubble" style="max-width:640px">${t.discussion}</div>
+        <button class="start-btn fake" id="revealKeyBtn" style="font-size:1rem;padding:14px 30px;">
+          Think Hard: Why Would That Happen? Reveal Explanation
+        </button>
+        <div class="answer-key hidden" id="answerKeyBox">
+          <div>${t.answerKey}</div>
+          <div class="self-check">
+            <div class="self-check-label">DID YOUR THINKING MATCH?</div>
+            <div class="self-check-row">
+              <button class="verdict-btn real" data-match="yes">Yes, It Did</button>
+              <button class="verdict-btn confused" data-match="somewhat">Somewhat</button>
+              <button class="verdict-btn fake" data-match="no">No, It Did Not</button>
+            </div>
+            <div class="self-check-feedback" id="selfCheckFeedback"></div>
+          </div>
+        </div>`;
+    }
+
+    screenRoot.innerHTML = `
+      <div class="quiz-shell tell-shell">
+        <div class="exhibit-tag">${stepTag}</div>
+        <h2 class="tell-title">${t.icon} ${t.name}</h2>
+        <div class="tell-encourage">${STEP_ENCOURAGE[step]}</div>
+        ${body}
+        <div class="tell-nav-row">
+          <button class="verdict-btn confused" id="tellBackBtn">${step === 0 ? 'Back To Kit' : 'Back'}</button>
+          <button class="start-btn real ${step === 2 ? 'hidden' : ''}" id="tellNextBtn" style="padding:14px 36px;font-size:1.05rem;">
+            ${step < 2 ? 'Next' : 'Mark Tell Complete'}
+          </button>
+        </div>
+      </div>`;
+
+    if (step === 2) {
+      const revealBtn = document.getElementById('revealKeyBtn');
+      revealBtn.addEventListener('click', () => {
+        document.getElementById('answerKeyBox').classList.remove('hidden');
+        revealBtn.classList.add('hidden');
+      });
+
+      screenRoot.querySelectorAll('[data-match]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          screenRoot.querySelectorAll('[data-match]').forEach(b => (b.disabled = true));
+          document.getElementById('selfCheckFeedback').textContent = SELF_CHECK_FEEDBACK[btn.dataset.match];
+          document.getElementById('tellNextBtn').classList.remove('hidden');
+        });
+      });
+    }
+
+    document.getElementById('tellBackBtn').addEventListener('click', () => {
+      if (step === 0) renderTellGrid();
+      else renderTellStep(idx, step - 1);
+    });
+
+    document.getElementById('tellNextBtn').addEventListener('click', () => {
+      if (step < 2) {
+        renderTellStep(idx, step + 1);
+      } else {
+        state.tellsDone[idx] = true;
+        renderTellGrid();
+      }
+    });
+  }
+</script>
+</body>
+</html>
