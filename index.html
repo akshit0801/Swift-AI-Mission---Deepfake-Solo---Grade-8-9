@@ -84,6 +84,33 @@
     100%{left:130%;}
   }
 
+  /* ---------- monochrome icon system (no emoji, ever) ---------- */
+  .icon{display:inline-flex;vertical-align:middle;flex:0 0 auto;}
+  .icon svg{width:100%;height:100%;display:block;}
+  .icon-sm{width:18px;height:18px;}
+  .icon-md{width:26px;height:26px;}
+  .icon-lg{width:42px;height:42px;}
+  .icon-xl{width:64px;height:64px;}
+
+  /* ---------- glass panel tiers ---------- */
+  .glass-panel{
+    position:relative;
+    width:100%;
+    max-width:760px;
+    background:rgba(18,22,26,0.5);
+    backdrop-filter:blur(14px) saturate(1.2);
+    -webkit-backdrop-filter:blur(14px) saturate(1.2);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:14px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07);
+    padding:22px 32px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+  }
+  .glass-panel.bold{background:rgba(18,22,26,0.68);border-width:2px;}
+
   /* ---------- HUD frame ---------- */
   .hud-bar{
     position:relative;
@@ -116,16 +143,30 @@
   }
   @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.25;}}
 
+  .timer-wrap{display:flex;align-items:center;gap:10px;}
+  .timer-label{font-size:0.68rem;letter-spacing:2px;color:var(--text-dim);}
   .timer-chip{
-    font-weight:700;
+    position:relative;
+    overflow:hidden;
+    font-family:'Consolas','Courier New',monospace;
+    font-weight:800;
+    font-size:1.05rem;
+    letter-spacing:3px;
     color:var(--amber);
-    letter-spacing:1px;
-    border:1px solid var(--line);
-    background:rgba(0,0,0,0.2);
-    padding:4px 12px;
-    border-radius:3px;
+    background:#050807;
+    border:2px solid var(--line);
+    border-radius:6px;
+    padding:4px 14px;
+    text-shadow:0 0 8px rgba(207,154,82,0.85), 0 0 18px rgba(207,154,82,0.4);
+    box-shadow:inset 0 0 12px rgba(0,0,0,0.85);
   }
-  .timer-chip.critical{color:var(--brick);border-color:var(--brick);animation:blink 1s infinite;}
+  .timer-chip::before{
+    content:'';
+    position:absolute;inset:0;
+    background:repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0 2px, transparent 2px 5px);
+    pointer-events:none;
+  }
+  .timer-chip.critical{color:#ff7a68;border-color:var(--brick);text-shadow:0 0 8px rgba(255,90,70,0.9), 0 0 18px rgba(255,90,70,0.5);animation:blink 1s infinite;}
 
   .corner{
     position:absolute;
@@ -158,12 +199,11 @@
   main::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px;}
 
   .eye-mark{
-    font-size:clamp(2.2rem,4vw,3.2rem);
-    line-height:1;
     color:var(--amber);
     margin-bottom:6px;
-    text-shadow:0 0 22px rgba(207,154,82,0.35);
+    filter:drop-shadow(0 0 16px rgba(207,154,82,0.45));
   }
+  .eye-mark .icon{width:clamp(2.6rem,5vw,3.6rem);height:clamp(2.6rem,5vw,3.6rem);}
 
   .mission-kicker{
     font-family:'Consolas','Courier New',monospace;
@@ -217,6 +257,9 @@
     padding:10px 18px;
     border-radius:3px;
     letter-spacing:0.5px;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
   }
   .stat b{color:var(--amber);}
 
@@ -251,11 +294,29 @@
   }
 
   .start-btn.real{
-    background:var(--teal-dim);
+    background:linear-gradient(180deg, #4f8a8b, var(--teal-dim));
     color:#eafffb;
     border:2px solid var(--teal);
-    box-shadow:0 0 22px rgba(91,154,155,0.4);
+    box-shadow:0 8px 22px rgba(0,0,0,0.35), 0 0 22px rgba(91,154,155,0.4);
   }
+
+  /* glossy sheen shared by every clickable surface — a moving diagonal
+     highlight sweep on hover, plus a subtle top-light + drop shadow at rest */
+  .start-btn, .verdict-btn, .tell-card{
+    position:relative;
+    overflow:hidden;
+    box-shadow:0 6px 18px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.15);
+  }
+  .start-btn::before, .verdict-btn::before, .tell-card::before{
+    content:'';
+    position:absolute;top:0;left:-60%;
+    width:45%;height:100%;
+    background:linear-gradient(120deg, transparent, rgba(255,255,255,0.35), transparent);
+    transform:skewX(-20deg);
+    transition:left 0.55s ease;
+    pointer-events:none;
+  }
+  .start-btn:hover::before, .verdict-btn:hover::before, .tell-card:hover::before{left:130%;}
 
   .hidden{display:none !important;}
 
@@ -465,13 +526,16 @@
     cursor:pointer;
     text-transform:uppercase;
     background:var(--panel);
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
     transition:transform 0.15s ease;
   }
   .verdict-btn:hover{transform:translateY(-2px);}
   .verdict-btn:disabled{opacity:0.5;cursor:default;transform:none;}
-  .verdict-btn.real{border:2px solid var(--teal);color:#eafffb;}
-  .verdict-btn.fake{border:2px solid var(--brick);color:var(--text-main);}
-  .verdict-btn.confused{border:2px solid var(--amber);color:var(--text-main);}
+  .verdict-btn.real{background:linear-gradient(180deg, rgba(91,154,155,0.25), rgba(49,58,66,0.92));border:2px solid var(--teal);color:#eafffb;}
+  .verdict-btn.fake{background:linear-gradient(180deg, rgba(166,80,58,0.22), rgba(49,58,66,0.92));border:2px solid var(--brick);color:var(--text-main);}
+  .verdict-btn.confused{background:linear-gradient(180deg, rgba(207,154,82,0.2), rgba(49,58,66,0.92));border:2px solid var(--amber);color:var(--text-main);}
 
   /* ---------- score screen ---------- */
   .score-big{
@@ -564,9 +628,11 @@
   }
   .tell-card{
     position:relative;
-    background:var(--panel);
-    border:1px solid var(--line);
-    border-radius:8px;
+    background:rgba(49,58,66,0.5);
+    backdrop-filter:blur(10px) saturate(1.15);
+    -webkit-backdrop-filter:blur(10px) saturate(1.15);
+    border:1px solid rgba(255,255,255,0.12);
+    border-radius:10px;
     padding:18px 10px;
     display:flex;
     flex-direction:column;
@@ -577,15 +643,18 @@
   }
   .tell-card:hover{transform:translateY(-3px);border-color:var(--teal);}
   .tell-card.locked{opacity:0.45;cursor:not-allowed;}
-  .tell-card.locked:hover{transform:none;border-color:var(--line);}
+  .tell-card.locked:hover{transform:none;border-color:rgba(255,255,255,0.12);}
   .lock-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
     font-family:'Consolas','Courier New',monospace;
     font-size:0.68rem;
     letter-spacing:1px;
     color:var(--brick);
     margin-top:2px;
   }
-  .tell-card .t-icon{font-size:2.1rem;}
+  .tell-card .t-icon{color:var(--teal);}
   .tell-card .t-name{font-size:0.98rem;font-weight:700;text-align:center;}
   .tell-card .t-diff{
     font-family:'Consolas','Courier New',monospace;
@@ -599,9 +668,14 @@
   .t-diff.diff-medium{border-color:var(--amber);color:var(--amber);}
   .t-diff.diff-hard{border-color:var(--brick);color:var(--brick);}
   .tell-card .t-check{
-    position:absolute;top:6px;right:8px;
-    color:var(--teal);font-size:1rem;font-weight:700;
+    position:absolute;top:8px;right:8px;
+    width:22px;height:22px;
+    border-radius:50%;
+    background:var(--teal);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 10px rgba(91,154,155,0.6);
   }
+  .tell-card .t-check .icon{width:12px;height:12px;color:#04211f;}
   .tell-progress{
     font-family:'Consolas','Courier New',monospace;
     font-size:0.98rem;
@@ -611,7 +685,8 @@
   .tell-progress b{color:var(--amber);}
 
   .tell-shell{max-width:680px;gap:14px;}
-  .tell-title{font-size:clamp(1.4rem,2.9vw,1.95rem);margin:0;}
+  .tell-title{display:flex;align-items:center;justify-content:center;gap:12px;font-size:clamp(1.4rem,2.9vw,1.95rem);margin:0;}
+  .tell-title .icon{color:var(--teal);}
   .clip-meta{
     font-family:'Consolas','Courier New',monospace;
     font-size:0.85rem;
@@ -630,8 +705,10 @@
   .answer-key{
     max-width:620px;
     background:rgba(207,154,82,0.1);
+    backdrop-filter:blur(10px) saturate(1.15);
+    -webkit-backdrop-filter:blur(10px) saturate(1.15);
     border:1px solid var(--amber);
-    border-radius:6px;
+    border-radius:10px;
     padding:16px 20px;
     font-size:1rem;
     line-height:1.45;
@@ -659,7 +736,7 @@
     padding:18px;
     color:var(--text-dim);
   }
-  .placeholder-img .ph-icon{font-size:2.2rem;opacity:0.55;}
+  .placeholder-img .ph-icon{color:var(--text-dim);opacity:0.6;}
   .placeholder-img .ph-caption{font-size:0.92rem;line-height:1.4;text-align:center;color:var(--text-main);}
 
   /* ---------- self-check ---------- */
@@ -690,7 +767,10 @@
 
   <div class="hud-bar top">
     <span><span class="hud-dot"></span>MISSION FILE // EAGLE-EYE-01</span>
-    <span class="timer-chip hidden" id="timerChip">⏱ TIME REMAINING: 30:00</span>
+    <span class="timer-wrap">
+      <span class="timer-label">TIME REMAINING</span>
+      <span class="timer-chip hidden" id="timerChip">30:00</span>
+    </span>
     <span>CLEARANCE&nbsp;LEVEL:&nbsp;TRUTH&nbsp;SCIENTIST&nbsp;IN&nbsp;TRAINING</span>
   </div>
 
@@ -701,20 +781,22 @@
 
   <main>
     <div class="intro-screen" id="screenRoot">
-      <div class="eye-mark">◎</div>
+      <div class="eye-mark"><span class="icon icon-xl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg></span></div>
       <div class="mission-kicker">Mission Briefing</div>
       <h1 class="title">THE EAGLE EYE</h1>
-      <p class="briefing">
-        Every second, synthetic faces and voices slip into feeds that look completely real.
-        Your job as a junior truth scientist is to build the eye that can tell them apart —
-        <strong>not by gut feeling, but by evidence.</strong>
-        One habit will get tested before anything else: the impulse to trust the first button you see.
-      </p>
+      <div class="glass-panel bold" style="max-width:860px;">
+        <p class="briefing" style="margin:0 0 6px;">
+          Every second, synthetic faces and voices slip into feeds that look completely real.
+          Your job as a junior truth scientist is to build the eye that can tell them apart —
+          <strong>not by gut feeling, but by evidence.</strong>
+          One habit will get tested before anything else: the impulse to trust the first button you see.
+        </p>
 
-      <div class="stat-row">
-        <div class="stat">TARGETS: <b>6 IMAGE PAIRS</b></div>
-        <div class="stat">SKILL: <b>FORENSIC OBSERVATION</b></div>
-        <div class="stat">STATUS: <b>UNVERIFIED</b></div>
+        <div class="stat-row" style="margin-bottom:0;">
+          <div class="stat"><span class="icon icon-sm" style="color:var(--amber);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg></span>TARGETS: <b>6 IMAGE PAIRS</b></div>
+          <div class="stat"><span class="icon icon-sm" style="color:var(--amber);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.8-4.8"/></svg></span>SKILL: <b>FORENSIC OBSERVATION</b></div>
+          <div class="stat"><span class="icon icon-sm" style="color:var(--amber);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v18"/><path d="M5 4h13l-3 4 3 4H5"/></svg></span>STATUS: <b>UNVERIFIED</b></div>
+        </div>
       </div>
 
       <div class="button-zone">
@@ -771,6 +853,28 @@
   const flashText = document.getElementById('flashText');
   const timerChip = document.getElementById('timerChip');
 
+  /* ---------------- monochrome icon system (no emoji, ever) ----------------
+     One shared stroke style; individual paths override fill/stroke locally
+     for filled accents (pupils, dots, half-circles). 24x24 viewBox so every
+     icon drops in at any size class unmodified. */
+  const ICON_ATTRS = 'fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"';
+  const ICONS = {
+    eye:    '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/>',
+    tooth:  '<path d="M12 3.5c-2.6 0-4.7 1.7-4.7 4.6 0 2.6.9 4.3 1.4 6.9.3 1.7.9 2.5 1.4 2.5.6 0 .8-1 .9-2.7.1-1.6.4-2.3 1-2.3s.9.7 1 2.3c.1 1.7.3 2.7.9 2.7.5 0 1.1-.8 1.4-2.5.5-2.6 1.4-4.3 1.4-6.9 0-2.9-2.1-4.6-4.7-4.6z"/>',
+    ear:    '<path d="M9 15.5c-1.7-1.4-2.5-3.2-2.2-5.3.4-3 3-5.2 6-4.9 3.3.3 5.7 3.2 5.4 6.5-.2 1.8-1.1 2.6-1.6 3.7-.4.8-.3 1.5.1 2.2a2.1 2.1 0 0 1-3.6 2.1"/><path d="M9.3 12.2c-.2-1.4.7-2.7 2.1-2.9"/>',
+    wave:   '<path d="M2 9c2.2-2.6 4.4-2.6 6.6 0s4.4 2.6 6.6 0 4.4-2.6 6.6 0"/><path d="M2 15.5c2.2-2.6 4.4-2.6 6.6 0s4.4 2.6 6.6 0 4.4-2.6 6.6 0"/>',
+    lips:   '<path d="M2.5 12.5c3.4-2.4 6.8-3.6 9.5-3.6s6.1 1.2 9.5 3.6c-3.4 2.6-6.8 3.8-9.5 3.8s-6.1-1.2-9.5-3.8z"/><path d="M2.5 12.5c3.2 1.1 6.4 1.6 9.5 1.6s6.3-.5 9.5-1.6"/>',
+    shadow: '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" stroke="none"/>',
+    lock:   '<rect x="5" y="11" width="14" height="9" rx="2.2"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/>',
+    tick:   '<path d="M3.5 12.5l6 6L20.5 5.5" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>',
+    cross:  '<path d="M5 5l14 14M19 5L5 19" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/>',
+    help:   '<path d="M9 9a3 3 0 1 1 4.2 2.7c-.9.5-1.2 1-1.2 2.3" stroke-width="2.2"/><circle cx="12" cy="17.3" r="1" fill="currentColor" stroke="none"/>',
+    image:  '<rect x="2.5" y="4" width="19" height="16" rx="2"/><circle cx="8.5" cy="10" r="2"/><path d="M2.5 16.5l5.5-5.5 4.5 4.5 3-3 5.5 5.5"/>'
+  };
+  function icon(name, cls) {
+    return '<span class="icon ' + (cls || '') + '"><svg viewBox="0 0 24 24" ' + ICON_ATTRS + '>' + (ICONS[name] || '') + '</svg></span>';
+  }
+
   /* ---------------- background ambience ---------------- */
   function buildCodeColumn() {
     let out = '';
@@ -825,7 +929,7 @@
   }
 
   function updateTimerDisplay() {
-    timerChip.textContent = '⏱ TIME REMAINING: ' + formatTime(state.timeLeft);
+    timerChip.textContent = formatTime(state.timeLeft);
     timerChip.classList.toggle('critical', state.timeLeft <= 60);
   }
 
@@ -883,12 +987,14 @@
             <span class="a-role">SENIOR TRUTH SCIENTIST AI</span>
           </div>
         </div>
-        <div class="speech-bubble" id="ariaSpeech">
-          Rate yourself honestly, truth scientist. On a scale of 1 to 10 — how confident are you that you can spot a fake on sight?
-        </div>
-        <div class="slider-row">
-          <input type="range" min="1" max="10" value="5" id="confidenceSlider">
-          <div class="slider-value" id="confidenceValue">CONFIDENCE: <b>5</b> / 10</div>
+        <div class="glass-panel bold" style="max-width:680px;">
+          <div class="speech-bubble" id="ariaSpeech" style="background:transparent;border-color:transparent;border-left-color:var(--teal);">
+            Rate yourself honestly, truth scientist. On a scale of 1 to 10 — how confident are you that you can spot a fake on sight?
+          </div>
+          <div class="slider-row">
+            <input type="range" min="1" max="10" value="5" id="confidenceSlider">
+            <div class="slider-value" id="confidenceValue">CONFIDENCE: <b>5</b> / 10</div>
+          </div>
         </div>
         <button class="start-btn real" id="acceptChallengeBtn">Accept The Challenge</button>
       </div>`;
@@ -931,9 +1037,9 @@
           <img src="${src}" alt="Evidence photograph">
         </div>
         <div class="verdict-row">
-          <button class="verdict-btn real" data-choice="real">Real</button>
-          <button class="verdict-btn fake" data-choice="fake">Fake</button>
-          <button class="verdict-btn confused" data-choice="confused">Confused</button>
+          <button class="verdict-btn real" data-choice="real">${icon('tick', 'icon-sm')}Real</button>
+          <button class="verdict-btn fake" data-choice="fake">${icon('cross', 'icon-sm')}Fake</button>
+          <button class="verdict-btn confused" data-choice="confused">${icon('help', 'icon-sm')}Confused</button>
         </div>
       </div>`;
 
@@ -983,7 +1089,7 @@
 
     const chips = state.answers.map(a => `
       <div class="result-chip ${a.correct ? 'good' : 'bad'}">
-        <span>${a.correct ? '✓' : '✗'}</span>
+        ${icon(a.correct ? 'tick' : 'cross', 'icon-sm')}
         <span>${a.choice.toUpperCase()}</span>
       </div>`).join('');
 
@@ -993,13 +1099,15 @@
         <h1 class="title" style="font-size:clamp(1.8rem,4.4vw,3.2rem);text-shadow:1px 0 var(--brick), -1px 0 var(--teal);">
           Your intuition isn't broken,<br>the algorithm is
         </h1>
-        <div class="score-big"><b>${state.score}</b> / ${total} CORRECT</div>
-        <div class="score-compare">
-          You rated your confidence at <b style="color:var(--amber)">${state.confidence}/10</b> before we started —
-          your actual accuracy was <b style="color:var(--teal)">${accuracy}%</b>.
+        <div class="glass-panel bold" style="max-width:700px;">
+          <div class="score-big"><b>${state.score}</b> / ${total} CORRECT</div>
+          <div class="score-compare">
+            You rated your confidence at <b style="color:var(--amber)">${state.confidence}/10</b> before we started —
+            your actual accuracy was <b style="color:var(--teal)">${accuracy}%</b>.
+          </div>
+          <div class="score-encourage">${encourageLine}</div>
+          <div class="chip-row">${chips}</div>
         </div>
-        <div class="score-encourage">${encourageLine}</div>
-        <div class="chip-row">${chips}</div>
         <button class="start-btn real" id="nextAfterScoreBtn">Next</button>
       </div>`;
 
@@ -1014,14 +1122,16 @@
       <div class="quiz-shell info-shell">
         <div class="mission-kicker">Field Briefing</div>
         <h1 class="title" style="font-size:clamp(1.4rem,3.2vw,2.1rem);margin:0;">WHAT IS A DEEPFAKE?</h1>
-        <p class="briefing">
-          A deepfake is audio or video generated by AI to swap or fabricate a person's face, voice, or actions —
-          convincing enough to pass as real. It's dangerous because it weaponizes trust: a fake clip of a CEO,
-          a relative, or an official can move markets or drain a bank account before anyone checks it's fabricated.
-        </p>
-        <div class="stat-row">
-          <div class="stat">DEEPFAKE FILES SHARED ONLINE, 2023: <b>~8 MILLION</b></div>
-          <div class="stat">SINGLE DEEPFAKE VIDEO-CALL SCAM, 2024: <b>$25M LOST</b></div>
+        <div class="glass-panel bold" style="max-width:800px;">
+          <p class="briefing" style="margin:0 0 4px;">
+            A deepfake is audio or video generated by AI to swap or fabricate a person's face, voice, or actions —
+            convincing enough to pass as real. It's dangerous because it weaponizes trust: a fake clip of a CEO,
+            a relative, or an official can move markets or drain a bank account before anyone checks it's fabricated.
+          </p>
+          <div class="stat-row" style="margin-bottom:0;">
+            <div class="stat">DEEPFAKE FILES SHARED ONLINE, 2023: <b>~8 MILLION</b></div>
+            <div class="stat">SINGLE DEEPFAKE VIDEO-CALL SCAM, 2024: <b>$25M LOST</b></div>
+          </div>
         </div>
         <div class="video-frame">
           <iframe src="https://www.youtube.com/embed/WFc6t-c892A" title="Deepfake explainer video"
@@ -1039,7 +1149,7 @@
   /* ---------------- Phase 2 : the Tell Library ---------------- */
   const TELLS = [
     {
-      key: 'teeth', icon: '🦷', name: 'Teeth Drift', difficulty: 'Medium',
+      key: 'teeth', icon: 'tooth', name: 'Teeth Drift', difficulty: 'Medium',
       video: { id: 'VWrhRBb-1Ig', title: 'Bill Hader channels Tom Cruise [DeepFake]', creator: 'Ctrl Shift Face' },
       timestamp: 'Any close-up while he is mid-sentence, ~0:05–0:25',
       observe: 'Pause on a wide-mouth vowel sound. Watch individual teeth — do their width, spacing, or edges change from one frame to the next instead of staying rigid?',
@@ -1052,7 +1162,7 @@
       answerKey: 'Teeth are small, high-contrast, and change shape rapidly with speech, leaving very little margin for error. A forehead is large, smooth, and barely moves, so small mistakes are far less visible there.'
     },
     {
-      key: 'blink', icon: '👁️', name: 'The Blink Problem', difficulty: 'Easy',
+      key: 'blink', icon: 'eye', name: 'The Blink Problem', difficulty: 'Easy',
       video: { id: 'cQ54GDm1eL0', title: 'You Won’t Believe What Obama Says In This Video!', creator: 'BuzzFeedVideo / Jordan Peele' },
       timestamp: 'Watch every blink between 0:00–0:30',
       observe: 'Count the blinks in 15 seconds and check whether both eyelids close to the same depth, at the same speed, every time.',
@@ -1065,7 +1175,7 @@
       answerKey: 'Full video of real blink cycles from multiple angles and lighting conditions, so the model learns what an eyelid does across an entire blink rather than just "open" versus "closed" stills.'
     },
     {
-      key: 'edges', icon: '✂️', name: 'Ear and Hair Edges', difficulty: 'Medium',
+      key: 'edges', icon: 'ear', name: 'Ear and Hair Edges', difficulty: 'Medium',
       video: { id: 'oxXpB9pSETo', title: 'This is not Morgan Freeman - A Deepfake Singularity', creator: 'deepfake research demo' },
       timestamp: 'Any moment he turns or tilts his head',
       observe: 'Watch the boundary where hair meets forehead, and where the ear meets the side of the face, during a head turn.',
@@ -1078,7 +1188,7 @@
       answerKey: 'Hair is thin, high-frequency detail with countless tiny edges, so the blending mask needs pixel-level precision. A cheek is one smooth region that’s far easier to paint over convincingly.'
     },
     {
-      key: 'warp', icon: '🌊', name: 'Background Warp', difficulty: 'Hard',
+      key: 'warp', icon: 'wave', name: 'Background Warp', difficulty: 'Hard',
       video: { id: 'GMoOCKkcd_w', title: 'How to Detect Deepfakes: The Science of Recognizing AI Generated Content', creator: 'media literacy explainer' },
       timestamp: 'Whenever a moving-background example is shown',
       observe: 'Keep your eyes on a straight background line (a doorframe, a window edge) while the subject moves. Does it stay straight, or does it bend?',
@@ -1091,7 +1201,7 @@
       answerKey: 'A computer can measure the exact pixel position of a straight line in every frame and flag a sub-pixel bend instantly. A human eye is naturally drawn to the face and rarely tracks background geometry closely enough to notice.'
     },
     {
-      key: 'pbm', icon: '👄', name: 'The P–B–M Test', difficulty: 'Hard',
+      key: 'pbm', icon: 'lips', name: 'The P–B–M Test', difficulty: 'Hard',
       video: { id: 'iyiOVUbsPcM', title: 'Very realistic Tom Cruise Deepfake | AI Tom Cruise', creator: 'DeepTomCruise-style demo' },
       timestamp: 'Any word containing a P, B, or M sound',
       observe: 'Listen for a P, B, or M sound and watch whether the lips fully press together at the exact instant you hear it.',
@@ -1104,7 +1214,7 @@
       answerKey: '"Ah" allows a wide range of acceptable mouth shapes, so the model can approximate it. P, B, and M have exactly one correct mouth shape — fully closed lips — at one exact instant, leaving zero room to fudge it.'
     },
     {
-      key: 'shadow', icon: '🔺', name: 'Shadow Mismatch', difficulty: 'Medium',
+      key: 'shadow', icon: 'shadow', name: 'Shadow Mismatch', difficulty: 'Medium',
       video: { id: 'zXvwlgbYcbU', title: 'What Are Deepfakes? DEEPFAKE DETECTION & Digital Manipulation', creator: 'media literacy explainer' },
       timestamp: 'Whenever a well-lit face example is shown against its background',
       observe: 'Find the shadow under the nose and the shadow on the neck. Imagine a line from each shadow back to its light source — do both lines point the same direction?',
@@ -1158,11 +1268,11 @@
       const locked = anyLocked && i !== state.currentTellIdx;
       return `
       <div class="tell-card ${locked ? 'locked' : ''}" data-idx="${i}">
-        ${state.tellsDone[i] ? '<span class="t-check">✓</span>' : ''}
-        <span class="t-icon">${t.icon}</span>
+        ${state.tellsDone[i] ? `<span class="t-check">${icon('tick')}</span>` : ''}
+        <span class="t-icon">${icon(t.icon, 'icon-lg')}</span>
         <span class="t-name">${t.name}</span>
         <span class="t-diff diff-${t.difficulty.toLowerCase()}">${t.difficulty.toUpperCase()}</span>
-        ${locked ? `<span class="lock-badge">🔒 ${formatTime(remainingSec)}</span>` : ''}
+        ${locked ? `<span class="lock-badge">${icon('lock', 'icon-sm')} ${formatTime(remainingSec)}</span>` : ''}
       </div>`;
     }).join('');
 
@@ -1250,11 +1360,11 @@
       body = `
         <div class="placeholder-row">
           <div class="placeholder-img">
-            <span class="ph-icon">🖼️</span>
+            <span class="ph-icon">${icon('image', 'icon-xl')}</span>
             <span class="ph-caption">${t.screenshots[0]}</span>
           </div>
           <div class="placeholder-img">
-            <span class="ph-icon">🖼️</span>
+            <span class="ph-icon">${icon('image', 'icon-xl')}</span>
             <span class="ph-caption">${t.screenshots[1]}</span>
           </div>
         </div>
@@ -1272,9 +1382,9 @@
           <div class="self-check">
             <div class="self-check-label">DID YOUR THINKING MATCH?</div>
             <div class="self-check-row">
-              <button class="verdict-btn real" data-match="yes">Yes, It Did</button>
-              <button class="verdict-btn confused" data-match="somewhat">Somewhat</button>
-              <button class="verdict-btn fake" data-match="no">No, It Did Not</button>
+              <button class="verdict-btn real" data-match="yes">${icon('tick', 'icon-sm')}Yes, It Did</button>
+              <button class="verdict-btn confused" data-match="somewhat">${icon('help', 'icon-sm')}Somewhat</button>
+              <button class="verdict-btn fake" data-match="no">${icon('cross', 'icon-sm')}No, It Did Not</button>
             </div>
             <div class="self-check-feedback" id="selfCheckFeedback"></div>
           </div>
@@ -1284,7 +1394,7 @@
     screenRoot.innerHTML = `
       <div class="quiz-shell tell-shell">
         <div class="exhibit-tag">${stepTag}</div>
-        <h2 class="tell-title">${t.icon} ${t.name}</h2>
+        <h2 class="tell-title">${icon(t.icon, 'icon-md')} ${t.name}</h2>
         <div class="tell-encourage">${STEP_ENCOURAGE[step]}</div>
         ${body}
         <div class="tell-nav-row">
